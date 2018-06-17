@@ -1251,7 +1251,7 @@ function get35mmEquivFocalLength(&$result) {
 		// Calculate 35mm diagonal using Pythagoras' theorem
 		$diag35mm = sqrt(1872);   // 36² + 24² = 1872
 		$cropfactor = $diag35mm / $diagccd;
-		$equivfl = intval($fl) * $cropfactor;
+		$equivfl = floatval($fl) * $cropfactor;
 		return $equivfl;
 	}
 	return null;
