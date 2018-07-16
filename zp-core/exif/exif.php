@@ -1184,6 +1184,44 @@ function ConvertToFraction($v, &$n, &$d) {
 }
 
 /**
+ * Converts a string to it's float value while testing for locale-specific
+ * decimal and thousands separators.
+ * 
+ * @param string $s
+ * @return float
+ */
+function getFloatValue($s) {
+	// decimal separator?
+	if (preg_match('![^[:digit:]]!', (string)1.2, $match)) {
+		$ds = $match[0];
+	} else {
+		// Huh, no decimal separator?! That's not supposed to happen! Cannot replace safely!
+		return floatval($s);
+	}
+
+	// thousands separator?
+	if (preg_match('![^[:digit:]]!', (string)1000, $match)) {
+		$ts = $match[0];
+		if ($ts !== $ds) {
+			// Remove thousands separators
+			$s = str_replace($ts, '', $s);
+		} else {
+			// Identical decimal and thousands separators?! You folks don't like numbers, do you?
+			// Replace all but last occurance (and let's hope that's a decimal separator!)
+			$regex = "\\$ts(?=[[:digit:]]*\\$ds)";
+			$s = preg_replace("!$regex!", '', $s);
+		}
+	}
+
+	if ($ds !== '.') {
+		// Replace decimal separator for locale-unaware floatval() to work
+		$s = str_replace($ds, '.', $s);
+	}
+
+	return floatval($s);
+}
+
+/**
  * Calculates the 35mm-equivalent focal length from the reported sensor resolution
  * @author Tristan Harward (trisweb)
  * 
@@ -1193,12 +1231,12 @@ function ConvertToFraction($v, &$n, &$d) {
  */
 function get35mmEquivFocalLength(&$result) {
 	if (isset($result['SubIFD']['ExifImageWidth'])) {
-		$width = $result['SubIFD']['ExifImageWidth'];
+		$width = intval($result['SubIFD']['ExifImageWidth']);
 	} else {
 		$width = 0;
 	}
 	if (isset($result['SubIFD']['ExifImageHeight'])) {
-		$height = $result['SubIFD']['ExifImageHeight'];
+		$height = intval($result['SubIFD']['ExifImageHeight']);
 	} else {
 		$height = 0;
 	}
@@ -1239,19 +1277,21 @@ function get35mmEquivFocalLength(&$result) {
 	}
 	if (isset($result['SubIFD']['FocalLength'])) {
 		$fl = $result['SubIFD']['FocalLength'];
+		// Strip ' mm' and convert to float value
+		$fl = getFloatValue($fl);
 	} else {
 		$fl = 0;
 	}
 	if (!empty($width) && !empty($height) && !empty($xres) && !empty($yres) && !empty($units) && !empty($fl)) {
 		// Calculate CCD diagonal using Pythagoras' theorem (a² + b² = c²)
 		$diagccd = sqrt(
-				  pow(((intval($width) * $unitfactor) / $xres), 2)
-			 	+ pow(((intval($height) * $unitfactor) / $yres), 2)
+				  pow((($width * $unitfactor) / $xres), 2)
+			 	+ pow((($height * $unitfactor) / $yres), 2)
 				);
 		// Calculate 35mm diagonal using Pythagoras' theorem
 		$diag35mm = sqrt(1872);   // 36² + 24² = 1872
 		$cropfactor = $diag35mm / $diagccd;
-		$equivfl = intval($fl) * $cropfactor;
+		$equivfl = $fl * $cropfactor;
 		return $equivfl;
 	}
 	return null;
