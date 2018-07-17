@@ -1207,7 +1207,7 @@ function getFloatValue($s) {
 			$s = str_replace($ts, '', $s);
 		} else {
 			// Identical decimal and thousands separators?! You folks don't like numbers, do you?
-			// Replace all but last occurance (and let's hope that's a decimal separator!)
+			// Replace all but last occurrence (and let's hope that's a decimal separator!)
 			$regex = "\\$ts(?=[[:digit:]]*\\$ds)";
 			$s = preg_replace("!$regex!", '', $s);
 		}
