@@ -1242,7 +1242,7 @@ function get35mmEquivFocalLength(&$result) {
 	} else {
 		$fl = 0;
 	}
-	if (!empty($width) && !empty($height) && !empty($xres) && !empty($yres) && !empty($units) && !empty($fl)) {
+	if (!empty($width) && !empty($height) && !empty($xres) && !empty($yres) && !empty($unitfactor) && !empty($fl)) {
 		// Calculate CCD diagonal using Pythagoras' theorem (a² + b² = c²)
 		$diagccd = sqrt(
 				  pow(((intval($width) * $unitfactor) / $xres), 2)
@@ -1253,7 +1253,7 @@ function get35mmEquivFocalLength(&$result) {
 		$cropfactor = $diag35mm / $diagccd;
 		// Workaround for locale-unaware floatval() that cannot deal with a comma as a decimal separator
 		// (cp. https://stackoverflow.com/questions/7302834/)
-		$decicomma = ((string)3.1415)[1] === ',';
+		$decicomma = (substr(M_PI, 1, 1) === ',');
 		$equivfl = floatval($decicomma ? str_replace(',', '.', $fl) : $fl) * $cropfactor;
 		return $equivfl;
 	}
